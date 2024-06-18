@@ -1,7 +1,6 @@
 """
 Module for basic arithmetic operations.
 """
-
 def add(a, b):
     """
     Function to add two numbers.

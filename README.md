@@ -11,3 +11,7 @@ next type the command
 git push --set-upstream origin master
 now it should be pushed to the github website click on actions 
 this code would be rejected due to a low pylint score
+
+git add -u
+git commit -m "message"
+git push
