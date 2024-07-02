@@ -1,34 +1,39 @@
 """
 Module: conftest.py
-This module contains test cases for testing the JsonHandler class methods.
+This module contains custom hooks for pytest to handle traceability matrix.
 """
-def pytest_runtest_protocol(item):
+
+def pytest_configure(config):
+    '''Initialize traceability matrix at the start of the test session.'''
+    config.traceability_matrix = {}
+
+def pytest_runtest_protocol(item, nextitem):
     '''Custom implementation of pytest_runtest_protocol hook to print test requirements.'''
     if hasattr(item, 'function') and hasattr(item.function, 'requirement'):
         print(f"Running test {item.nodeid} with requirement {item.function.requirement}")
-     # continue with the default test protocol
+    # continue with the default test protocol
+    return None
 
 def pytest_runtest_makereport(item, call):
-    ''' Custom implementation of pytest_runtest_makereport hook to update traceability matrix.'''
+    '''Custom implementation of pytest_runtest_makereport hook to update traceability matrix.'''
     if call.when == 'call':
         result = 'NOT RUN'
         if call.excinfo is not None:
-            if call.excinfo.typename == 'pytest.skip':
+            if call.excinfo.typename == 'Skipped':
                 result = 'SKIP'
-            elif call.excinfo.typename == 'pytest.xfail':
+            elif call.excinfo.typename == 'XFailed':
                 result = 'XFAIL'
             else:
                 result = 'FAIL'
         else:
             result = 'PASS'
-        item.config.traceability_matrix[item.nodeid] = (item.function.requirement, result)
+        if not hasattr(item.config, 'traceability_matrix'):
+            item.config.traceability_matrix = {}
+        item.config.traceability_matrix[item.nodeid] = (getattr(item.function, 'requirement', None), result)
 
-def pytest_sessionstart(session):
-    '''Custom implementation of pytest_sessionstart hook to initialize traceability matrix.'''
-    session.config.traceability_matrix = {}
-
-def pytest_sessionfinish(session):
+def pytest_sessionfinish(session, exitstatus):
     '''Custom implementation of pytest_sessionfinish hook to print traceability matrix.'''
     print("Traceability Matrix:")
-    for test, (requirement, result) in session.config.traceability_matrix.items():
-        print(f"{test}: {requirement}, {result}")
+    if hasattr(session.config, 'traceability_matrix'):
+        for test, (requirement, result) in session.config.traceability_matrix.items():
+            print(f"{test}: {requirement}, {result}")
