@@ -7,12 +7,11 @@ def pytest_configure(config):
     '''Initialize traceability matrix at the start of the test session.'''
     config.traceability_matrix = {}
 
-def pytest_runtest_protocol(item, nextitem):
+def pytest_runtest_protocol(item):
     '''Custom implementation of pytest_runtest_protocol hook to print test requirements.'''
     if hasattr(item, 'function') and hasattr(item.function, 'requirement'):
         print(f"Running test {item.nodeid} with requirement {item.function.requirement}")
     # continue with the default test protocol
-    return None
 
 def pytest_runtest_makereport(item, call):
     '''Custom implementation of pytest_runtest_makereport hook to update traceability matrix.'''
@@ -29,9 +28,10 @@ def pytest_runtest_makereport(item, call):
             result = 'PASS'
         if not hasattr(item.config, 'traceability_matrix'):
             item.config.traceability_matrix = {}
-        item.config.traceability_matrix[item.nodeid] = (getattr(item.function, 'requirement', None), result)
+        item.config.traceability_matrix[item.nodeid] = (getattr(item.function, 'requirement', None)
+                                                        , result)
 
-def pytest_sessionfinish(session, exitstatus):
+def pytest_sessionfinish(session):
     '''Custom implementation of pytest_sessionfinish hook to print traceability matrix.'''
     print("Traceability Matrix:")
     if hasattr(session.config, 'traceability_matrix'):
